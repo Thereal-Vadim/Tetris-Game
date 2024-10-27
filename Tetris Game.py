@@ -210,28 +210,67 @@ class Tetris:
             self.screen.blit(ghost_surface,(self.current_x * BLOCK_SIZE, ghost_y * BLOCK_SIZE))
 
     def draw_next_pieces(self):
+        # Заголовок секции
+        next_text = self.main_font.render('Следующие:', True, (255, 255, 255))
+        self.screen.blit(next_text, (FIELD_WIDTH * BLOCK_SIZE + 20, 70))
+
         for i, (piece, shape) in enumerate(zip(self.next_pieces, self.next_shapes)):
+            # Позиция для каждого превью
             preview_x = FIELD_WIDTH * BLOCK_SIZE + 20
-            preview_y = 100 + i * (PREVIEW_SIZE * BLOCK_SIZE + 10)
+            preview_y = 100 + i * (PREVIEW_SIZE * BLOCK_SIZE + 20)  # Увеличен отступ между фигурами
 
-            # Рамка для превью
-            preview_rect = pygame.Rect(preview_x, preview_y,
-                                       PREVIEW_SIZE * BLOCK_SIZE,
-                                       PREVIEW_SIZE * BLOCK_SIZE)
-            pygame.draw.rect(self.screen, (50, 50, 50), preview_rect, 2)
+            # Рисуем фон для превью
+            preview_bg = pygame.Surface((PREVIEW_SIZE * BLOCK_SIZE + 20,
+                                         PREVIEW_SIZE * BLOCK_SIZE + 20))
+            preview_bg.fill((40, 40, 40))  # Тёмно-серый фон
 
-            offset_x = (PREVIEW_SIZE - len(piece[0])) // 2
-            offset_y = (PREVIEW_SIZE - len(piece)) // 2
+            # Добавляем градиентную рамку
+            pygame.draw.rect(preview_bg, (60, 60, 60),
+                             preview_bg.get_rect(), 2)  # Внешняя рамка
+            pygame.draw.rect(preview_bg, (30, 30, 30),
+                             preview_bg.get_rect().inflate(-2, -2), 2)  # Внутренняя рамка
 
+            self.screen.blit(preview_bg, (preview_x - 10, preview_y - 10))
+
+            # Вычисляем центр для фигуры
+            piece_width = len(piece[0]) * BLOCK_SIZE
+            piece_height = len(piece) * BLOCK_SIZE
+            offset_x = (PREVIEW_SIZE * BLOCK_SIZE - piece_width) // 2
+            offset_y = (PREVIEW_SIZE * BLOCK_SIZE - piece_height) // 2
+
+            # Рисуем фигуру
             for y, row in enumerate(piece):
                 for x, cell in enumerate(row):
                     if cell:
-                        self.draw_block(
-                            x + offset_x + FIELD_WIDTH + 2,
-                            y + offset_y + 3 + i * 4,
-                            COLORS[shape],
-                            shadow=(i > 0)  # Более дальние фигуры затененные
-                        )
+                        block_x = preview_x + offset_x + x * BLOCK_SIZE
+                        block_y = preview_y + offset_y + y * BLOCK_SIZE
+
+                        # Основной блок
+                        block_rect = pygame.Rect(block_x, block_y,
+                                                 BLOCK_SIZE - 2, BLOCK_SIZE - 2)
+
+                        # Градиент для блока
+                        color1, color2 = COLORS[shape]
+                        pygame.draw.rect(self.screen, color1, block_rect)
+
+                        # Добавляем блики
+                        highlight_rect = pygame.Rect(block_x, block_y,
+                                                     BLOCK_SIZE - 2, BLOCK_SIZE // 3)
+                        pygame.draw.rect(self.screen, color2, highlight_rect)
+
+                        # Добавляем тень
+                        shadow_rect = pygame.Rect(block_x,
+                                                  block_y + BLOCK_SIZE - (BLOCK_SIZE // 3),
+                                                  BLOCK_SIZE - 2, BLOCK_SIZE // 3)
+                        shadow_color = tuple(max(0, c - 50) for c in color1)
+                        pygame.draw.rect(self.screen, shadow_color, shadow_rect)
+
+            # Номер следующей фигуры (маленький)
+            number_text = self.main_font.render(f'#{i + 1}', True, (150, 150, 150))
+            number_rect = number_text.get_rect()
+            number_rect.topright = (preview_x + PREVIEW_SIZE * BLOCK_SIZE + 5,
+                                    preview_y - 5)
+            self.screen.blit(number_text, number_rect)
 
     def draw_info(self):
         # Счет
